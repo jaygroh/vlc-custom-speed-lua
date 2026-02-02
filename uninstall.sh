@@ -5,31 +5,38 @@
 
 set -e
 
-# Detect OS and set install path
+# Detect OS and set paths
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    INSTALL_DIR="$HOME/.local/share/vlc/lua/extensions"
+    EXT_DIR="$HOME/.local/share/vlc/lua/extensions"
+    INTF_DIR="$HOME/.local/share/vlc/lua/intf"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    INSTALL_DIR="$HOME/Library/Application Support/org.videolan.vlc/lua/extensions"
+    EXT_DIR="$HOME/Library/Application Support/org.videolan.vlc/lua/extensions"
+    INTF_DIR="$HOME/Library/Application Support/org.videolan.vlc/lua/intf"
 elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
-    INSTALL_DIR="$APPDATA/vlc/lua/extensions"
+    EXT_DIR="$APPDATA/vlc/lua/extensions"
+    INTF_DIR="$APPDATA/vlc/lua/intf"
 else
     echo "Unknown OS: $OSTYPE"
     exit 1
 fi
 
-EXTENSION_PATH="$INSTALL_DIR/custom_speed.lua"
-
 echo "VLC Custom Speed Calculator - Uninstallation"
 echo "============================================="
 echo ""
 
-if [[ -f "$EXTENSION_PATH" ]]; then
-    echo "Removing: $EXTENSION_PATH"
-    rm "$EXTENSION_PATH"
-    echo ""
-    echo "Uninstallation complete!"
-    echo "Restart VLC to complete removal."
-else
-    echo "Extension not found at: $EXTENSION_PATH"
-    echo "Nothing to uninstall."
+# Remove extension
+if [[ -f "$EXT_DIR/custom_speed.lua" ]]; then
+    rm "$EXT_DIR/custom_speed.lua"
+    echo "Removed: $EXT_DIR/custom_speed.lua"
 fi
+
+# Remove interface script
+if [[ -f "$INTF_DIR/custom_speed_intf.lua" ]]; then
+    rm "$INTF_DIR/custom_speed_intf.lua"
+    echo "Removed: $INTF_DIR/custom_speed_intf.lua"
+fi
+
+echo ""
+echo "Uninstallation complete!"
+echo "Note: You may need to disable the interface in VLC preferences"
+echo "      or restart VLC to fully remove."
