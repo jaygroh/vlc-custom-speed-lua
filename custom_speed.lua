@@ -41,19 +41,17 @@ function menu()
         "Speed Planner",
         "OSD Display",
         "Script Setup",
-        {
-            "Quick Speed",
-            "0.25x",
-            "0.5x",
-            "0.75x",
-            "1x",
-            "1.25x",
-            "1.5x",
-            "1.75x",
-            "2x",
-            "3x",
-            "4x"
-        }
+        "---",
+        "Quick Speed: 0.25x",
+        "Quick Speed: 0.5x",
+        "Quick Speed: 0.75x",
+        "Quick Speed: 1x",
+        "Quick Speed: 1.25x",
+        "Quick Speed: 1.5x",
+        "Quick Speed: 1.75x",
+        "Quick Speed: 2x",
+        "Quick Speed: 3x",
+        "Quick Speed: 4x"
     }
 end
 
@@ -66,27 +64,12 @@ function trigger_menu(id)
         show_osd_dialog()
     elseif id == 3 then
         show_setup_dialog()
-    elseif type(id) == "string" and string.match(id, "^4%.") then
-        -- Quick Speed submenu item (e.g., "4.1", "4.2", etc.)
-        handle_quick_speed_submenu(id)
-    elseif type(id) == "number" and id >= 41 and id <= 50 then
-        -- Alternative: sequential IDs for quick speed items
-        handle_quick_speed_submenu(id)
-    end
-end
-
-function handle_quick_speed_submenu(id)
-    -- Extract the submenu item index
-    local idx
-    if type(id) == "string" then
-        idx = tonumber(string.match(id, "^4%.(.+)$"))
-    else
-        idx = id - 40  -- If using sequential IDs 41-50
-    end
-
-    if idx and idx >= 1 and idx <= #quick_speeds then
-        local speed = quick_speeds[idx].speed
-        set_playback_rate(speed)
+    elseif id >= 5 and id <= 14 then
+        -- Quick Speed items (IDs 5-14 map to quick_speeds indices 1-10)
+        local speed_idx = id - 4
+        if speed_idx >= 1 and speed_idx <= #quick_speeds then
+            set_playback_rate(quick_speeds[speed_idx].speed)
+        end
     end
 end
 
