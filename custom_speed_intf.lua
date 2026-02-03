@@ -181,27 +181,15 @@ function update_osd()
     local info = get_playback_info()
     if not info then return false end
 
-    -- Auto-hide logic
+    -- Auto-hide logic: hide OSD after timeout of inactivity (works during playback)
     if cfg.autohide_enabled == true then
-        local input = vlc.object.input()
-        if input then
-            local status = vlc.playlist.status()
-            local timeout = cfg.autohide_timeout or 5
+        local timeout = cfg.autohide_timeout or 5
+        local now = vlc.misc.mdate() / 1000000
+        local time_since_activity = now - (_osd_last_activity or now)
 
-            -- Check if paused or stopped
-            if status == "paused" or status == "stopped" then
-                if not _osd_idle_start then
-                    _osd_idle_start = vlc.misc.mdate() / 1000000
-                end
-                local idle_seconds = (vlc.misc.mdate() / 1000000) - _osd_idle_start
-                if idle_seconds > timeout then
-                    -- Timeout reached, don't display OSD
-                    return false
-                end
-            else
-                -- Playing - reset idle timer
-                _osd_idle_start = nil
-            end
+        if time_since_activity > timeout then
+            -- Timeout reached, don't display OSD (but keep polling for activity)
+            return false
         end
     end
 
@@ -255,6 +243,8 @@ function main_loop()
 
     local current_uri = nil
     local loop_count = 0
+    local last_speed = nil
+    _osd_last_activity = vlc.misc.mdate() / 1000000
 
     while true do
         -- Check if VLC is closing
@@ -272,6 +262,7 @@ function main_loop()
             if current_uri then
                 log("Playback stopped")
                 current_uri = nil
+                _osd_last_activity = vlc.misc.mdate() / 1000000
             end
             sleep(1)
 
@@ -285,6 +276,7 @@ function main_loop()
             elseif not current_uri or current_uri ~= uri then
                 -- New input
                 current_uri = uri
+                _osd_last_activity = vlc.misc.mdate() / 1000000
                 log("Now playing: " .. (item:name() or uri))
 
                 -- Log config state on new playback
@@ -293,6 +285,14 @@ function main_loop()
 
                 sleep(0.5)
             else
+                -- Check if speed changed (user activity indicator)
+                local input = vlc.object.input()
+                local current_speed = input and vlc.var.get(input, "rate") or 1.0
+                if last_speed and current_speed ~= last_speed then
+                    _osd_last_activity = vlc.misc.mdate() / 1000000
+                end
+                last_speed = current_speed
+
                 -- Current input - update OSD
                 update_osd()
 

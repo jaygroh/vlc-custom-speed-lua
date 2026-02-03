@@ -21,7 +21,7 @@
 function descriptor()
     return {
         title = "Speed Scheduler",
-        version = "3.4.0",
+        version = "3.5.0",
         author = "Jay Groh",
         url = "https://github.com/jaygroh/vlc-custom-speed-lua",
         shortdesc = "Speed Scheduler",
@@ -41,7 +41,19 @@ function menu()
         "Speed Planner",
         "OSD Display",
         "Script Setup",
-        "Quick Speed"
+        {
+            "Quick Speed",
+            "0.25x",
+            "0.5x",
+            "0.75x",
+            "1x",
+            "1.25x",
+            "1.5x",
+            "1.75x",
+            "2x",
+            "3x",
+            "4x"
+        }
     }
 end
 
@@ -54,8 +66,27 @@ function trigger_menu(id)
         show_osd_dialog()
     elseif id == 3 then
         show_setup_dialog()
-    elseif id == 4 then
-        show_quick_speed_dialog()
+    elseif type(id) == "string" and string.match(id, "^4%.") then
+        -- Quick Speed submenu item (e.g., "4.1", "4.2", etc.)
+        handle_quick_speed_submenu(id)
+    elseif type(id) == "number" and id >= 41 and id <= 50 then
+        -- Alternative: sequential IDs for quick speed items
+        handle_quick_speed_submenu(id)
+    end
+end
+
+function handle_quick_speed_submenu(id)
+    -- Extract the submenu item index
+    local idx
+    if type(id) == "string" then
+        idx = tonumber(string.match(id, "^4%.(.+)$"))
+    else
+        idx = id - 40  -- If using sequential IDs 41-50
+    end
+
+    if idx and idx >= 1 and idx <= #quick_speeds then
+        local speed = quick_speeds[idx].speed
+        set_playback_rate(speed)
     end
 end
 
@@ -348,7 +379,7 @@ function populate_time_dropdown()
 end
 
 --------------------------------------------------------------------------------
--- Quick Speed Dialog
+-- Quick Speed Presets
 --------------------------------------------------------------------------------
 
 local quick_speeds = {
@@ -363,49 +394,6 @@ local quick_speeds = {
     { label = "3x", speed = 3.0 },
     { label = "4x", speed = 4.0 }
 }
-
-function show_quick_speed_dialog()
-    close_dialog()
-
-    local item = vlc.input.item()
-    if not item then
-        dlg = vlc.dialog("Quick Speed")
-        dlg:add_label("No media is currently playing.", 1, 1, 4, 1)
-        dlg:add_button("Close", close_dialog, 2, 2, 2, 1)
-        dlg:show()
-        return
-    end
-
-    dlg = vlc.dialog("Quick Speed")
-
-    -- Title
-    dlg:add_label("Select playback speed:", 1, 1, 4, 1)
-
-    -- Separator
-    dlg:add_label(string.rep("-", 40), 1, 2, 4, 1)
-
-    -- Speed buttons in a 2-column grid
-    local row = 3
-    local col = 1
-    for _, preset in ipairs(quick_speeds) do
-        local speed_value = preset.speed
-        dlg:add_button(preset.label, function()
-            set_playback_rate(speed_value)
-            close_dialog()
-        end, col, row, 2, 1)
-
-        col = col + 2
-        if col > 4 then
-            col = 1
-            row = row + 1
-        end
-    end
-
-    -- Close button
-    dlg:add_button("Cancel", close_dialog, 2, row + 1, 2, 1)
-
-    dlg:show()
-end
 
 --------------------------------------------------------------------------------
 -- OSD Display Dialog
