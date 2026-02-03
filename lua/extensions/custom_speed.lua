@@ -651,13 +651,17 @@ function show_about_dialog()
     -- Row 11: Spacer
     dlg:add_label(" ", 1, 11, 4, 1)
 
-    -- Row 12: Website
-    dlg:add_label("github.com/jaygroh/vlc-custom-speed-lua", 1, 12, 4, 1)
+    -- Row 12: GitHub button
+    dlg:add_button("Visit GitHub Repository", open_github_link, 1, 12, 4, 1)
 
     -- Row 13: Close button
     dlg:add_button("Close", close_dialog, 2, 13, 2, 1)
 
     dlg:show()
+end
+
+function open_github_link()
+    vlc.web.open("https://github.com/jaygroh/vlc-custom-speed-lua")
 end
 
 --------------------------------------------------------------------------------
