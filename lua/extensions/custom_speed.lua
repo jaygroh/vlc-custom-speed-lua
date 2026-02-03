@@ -21,7 +21,7 @@
 function descriptor()
     return {
         title = "Speed Scheduler",
-        version = "3.3.0",
+        version = "2026.02.02.0",
         author = "Jay Groh",
         url = "https://github.com/jaygroh/vlc-custom-speed-lua",
         shortdesc = "Speed Scheduler",
@@ -39,7 +39,8 @@ function menu()
     return {
         "Speed Planner",
         "OSD Display",
-        "Script Setup"
+        "Script Setup",
+        "About"
     }
 end
 
@@ -52,6 +53,8 @@ function trigger_menu(id)
         show_osd_dialog()
     elseif id == 3 then
         show_setup_dialog()
+    elseif id == 4 then
+        show_about_dialog()
     end
 end
 
@@ -608,6 +611,53 @@ end
 function save_setup_and_close()
     save_intf_settings()
     close_dialog()
+end
+
+--------------------------------------------------------------------------------
+-- About Dialog
+--------------------------------------------------------------------------------
+
+function show_about_dialog()
+    close_dialog()
+
+    local version = "2026.02.02.0"
+
+    dlg = vlc.dialog("About Speed Scheduler")
+
+    -- Row 1: Title
+    dlg:add_label("Speed Scheduler", 1, 1, 4, 1)
+
+    -- Row 2: Separator
+    dlg:add_label(string.rep("-", 45), 1, 2, 4, 1)
+
+    -- Row 3-5: Description
+    dlg:add_label("Calculate playback speed to finish video", 1, 3, 4, 1)
+    dlg:add_label("in a specified time, with optional", 1, 4, 4, 1)
+    dlg:add_label("on-screen display of remaining time.", 1, 5, 4, 1)
+
+    -- Row 6: Spacer
+    dlg:add_label(" ", 1, 6, 4, 1)
+
+    -- Row 7: Version
+    dlg:add_label("Version: " .. version, 1, 7, 4, 1)
+
+    -- Row 8: Spacer
+    dlg:add_label(" ", 1, 8, 4, 1)
+
+    -- Row 9-10: Credits
+    dlg:add_label("Author: Jay Groh", 1, 9, 4, 1)
+    dlg:add_label("License: GNU General Public License v2", 1, 10, 4, 1)
+
+    -- Row 11: Spacer
+    dlg:add_label(" ", 1, 11, 4, 1)
+
+    -- Row 12: Website
+    dlg:add_label("github.com/jaygroh/vlc-custom-speed-lua", 1, 12, 4, 1)
+
+    -- Row 13: Close button
+    dlg:add_button("Close", close_dialog, 2, 13, 2, 1)
+
+    dlg:show()
 end
 
 --------------------------------------------------------------------------------
