@@ -21,13 +21,12 @@
 function descriptor()
     return {
         title = "Speed Scheduler",
-        version = "3.5.0",
+        version = "3.3.0",
         author = "Jay Groh",
         url = "https://github.com/jaygroh/vlc-custom-speed-lua",
         shortdesc = "Speed Scheduler",
         description = "Calculate playback speed to finish video in a specified time. " ..
-                      "Optional on-screen display of speed-adjusted remaining time. " ..
-                      "Quick speed presets included.",
+                      "Optional on-screen display of speed-adjusted remaining time.",
         capabilities = {"menu"}
     }
 end
@@ -40,18 +39,7 @@ function menu()
     return {
         "Speed Planner",
         "OSD Display",
-        "Script Setup",
-        "---",
-        "Quick Speed: 0.25x",
-        "Quick Speed: 0.5x",
-        "Quick Speed: 0.75x",
-        "Quick Speed: 1x",
-        "Quick Speed: 1.25x",
-        "Quick Speed: 1.5x",
-        "Quick Speed: 1.75x",
-        "Quick Speed: 2x",
-        "Quick Speed: 3x",
-        "Quick Speed: 4x"
+        "Script Setup"
     }
 end
 
@@ -64,12 +52,6 @@ function trigger_menu(id)
         show_osd_dialog()
     elseif id == 3 then
         show_setup_dialog()
-    elseif id >= 5 and id <= 14 then
-        -- Quick Speed items (IDs 5-14 map to quick_speeds indices 1-10)
-        local speed_idx = id - 4
-        if speed_idx >= 1 and speed_idx <= #quick_speeds then
-            set_playback_rate(quick_speeds[speed_idx].speed)
-        end
     end
 end
 
@@ -362,23 +344,6 @@ function populate_time_dropdown()
 end
 
 --------------------------------------------------------------------------------
--- Quick Speed Presets
---------------------------------------------------------------------------------
-
-local quick_speeds = {
-    { label = "0.25x", speed = 0.25 },
-    { label = "0.5x", speed = 0.5 },
-    { label = "0.75x", speed = 0.75 },
-    { label = "1x", speed = 1.0 },
-    { label = "1.25x", speed = 1.25 },
-    { label = "1.5x", speed = 1.5 },
-    { label = "1.75x", speed = 1.75 },
-    { label = "2x", speed = 2.0 },
-    { label = "3x", speed = 3.0 },
-    { label = "4x", speed = 4.0 }
-}
-
---------------------------------------------------------------------------------
 -- OSD Display Dialog
 --------------------------------------------------------------------------------
 
@@ -412,61 +377,55 @@ function show_osd_dialog()
     dlg:add_label("Clock Format:", 1, 2, 2, 1)
     widgets.use_24h = dlg:add_check_box("24-hour", cfg.use_24h_clock == true, 3, 2, 3, 1)
 
-    -- Row 3: Auto-hide mode
-    dlg:add_label("Auto-Hide:", 1, 3, 2, 1)
-    widgets.autohide_enabled = dlg:add_check_box("Enable", cfg.autohide_enabled == true, 3, 3, 1, 1)
-    dlg:add_label("Timeout (sec):", 4, 3, 1, 1)
-    widgets.autohide_timeout = dlg:add_text_input(tostring(cfg.autohide_timeout or 5), 5, 3, 2, 1)
+    -- Row 3: Separator
+    dlg:add_label(string.rep("-", 50), 1, 3, 6, 1)
 
-    -- Row 4: Separator
-    dlg:add_label(string.rep("-", 50), 1, 4, 6, 1)
+    -- Row 4: Description
+    dlg:add_label("Stack order (when elements share same position):", 1, 4, 6, 1)
 
-    -- Row 5: Description
-    dlg:add_label("Stack order (when elements share same position):", 1, 5, 6, 1)
+    -- Row 5: Column headers
+    dlg:add_label("Slot", 1, 5, 1, 1)
+    dlg:add_label("Element", 2, 5, 2, 1)
+    dlg:add_label("Show", 4, 5, 1, 1)
+    dlg:add_label("Position", 5, 5, 2, 1)
 
-    -- Row 6: Column headers
-    dlg:add_label("Slot", 1, 6, 1, 1)
-    dlg:add_label("Element", 2, 6, 2, 1)
-    dlg:add_label("Show", 4, 6, 1, 1)
-    dlg:add_label("Position", 5, 6, 2, 1)
-
-    -- Row 7: Top slot
-    dlg:add_label("Top:", 1, 7, 1, 1)
-    widgets.slot_top_elem = dlg:add_dropdown(2, 7, 2, 1)
+    -- Row 6: Top slot
+    dlg:add_label("Top:", 1, 6, 1, 1)
+    widgets.slot_top_elem = dlg:add_dropdown(2, 6, 2, 1)
     populate_element_dropdown(widgets.slot_top_elem, cfg.osd_slots.top.element)
-    widgets.slot_top_show = dlg:add_check_box("", cfg.osd_slots.top.show == true, 4, 7, 1, 1)
-    widgets.slot_top_pos = dlg:add_dropdown(5, 7, 2, 1)
+    widgets.slot_top_show = dlg:add_check_box("", cfg.osd_slots.top.show == true, 4, 6, 1, 1)
+    widgets.slot_top_pos = dlg:add_dropdown(5, 6, 2, 1)
     populate_position_dropdown(widgets.slot_top_pos, cfg.osd_slots.top.position)
 
-    -- Row 8: Middle slot
-    dlg:add_label("Middle:", 1, 8, 1, 1)
-    widgets.slot_mid_elem = dlg:add_dropdown(2, 8, 2, 1)
+    -- Row 7: Middle slot
+    dlg:add_label("Middle:", 1, 7, 1, 1)
+    widgets.slot_mid_elem = dlg:add_dropdown(2, 7, 2, 1)
     populate_element_dropdown(widgets.slot_mid_elem, cfg.osd_slots.middle.element)
-    widgets.slot_mid_show = dlg:add_check_box("", cfg.osd_slots.middle.show == true, 4, 8, 1, 1)
-    widgets.slot_mid_pos = dlg:add_dropdown(5, 8, 2, 1)
+    widgets.slot_mid_show = dlg:add_check_box("", cfg.osd_slots.middle.show == true, 4, 7, 1, 1)
+    widgets.slot_mid_pos = dlg:add_dropdown(5, 7, 2, 1)
     populate_position_dropdown(widgets.slot_mid_pos, cfg.osd_slots.middle.position)
 
-    -- Row 9: Bottom slot
-    dlg:add_label("Bottom:", 1, 9, 1, 1)
-    widgets.slot_bot_elem = dlg:add_dropdown(2, 9, 2, 1)
+    -- Row 8: Bottom slot
+    dlg:add_label("Bottom:", 1, 8, 1, 1)
+    widgets.slot_bot_elem = dlg:add_dropdown(2, 8, 2, 1)
     populate_element_dropdown(widgets.slot_bot_elem, cfg.osd_slots.bottom.element)
-    widgets.slot_bot_show = dlg:add_check_box("", cfg.osd_slots.bottom.show == true, 4, 9, 1, 1)
-    widgets.slot_bot_pos = dlg:add_dropdown(5, 9, 2, 1)
+    widgets.slot_bot_show = dlg:add_check_box("", cfg.osd_slots.bottom.show == true, 4, 8, 1, 1)
+    widgets.slot_bot_pos = dlg:add_dropdown(5, 8, 2, 1)
     populate_position_dropdown(widgets.slot_bot_pos, cfg.osd_slots.bottom.position)
 
-    -- Row 10: Note about speed
-    dlg:add_label("Note: Speed only shows when not at 1x", 1, 10, 6, 1)
+    -- Row 9: Note about speed
+    dlg:add_label("Note: Speed only shows when not at 1x", 1, 9, 6, 1)
 
-    -- Row 11: Note about script
-    dlg:add_label("* Enable script in Script Setup for OSD", 1, 11, 6, 1)
+    -- Row 10: Note about script
+    dlg:add_label("* Enable script in Script Setup for OSD", 1, 10, 6, 1)
 
-    -- Row 12: Status (pre-sized to prevent window resize)
-    widgets.status = dlg:add_label(string.rep(" ", 35), 1, 12, 6, 1)
+    -- Row 11: Status (pre-sized to prevent window resize)
+    widgets.status = dlg:add_label(string.rep(" ", 35), 1, 11, 6, 1)
 
-    -- Row 13: Buttons
-    dlg:add_button("Apply", apply_osd_settings, 1, 13, 2, 1)
-    dlg:add_button("Save & Close", save_osd_and_close, 3, 13, 2, 1)
-    dlg:add_button("Cancel", close_dialog, 5, 13, 2, 1)
+    -- Row 12: Buttons
+    dlg:add_button("Apply", apply_osd_settings, 1, 12, 2, 1)
+    dlg:add_button("Save & Close", save_osd_and_close, 3, 12, 2, 1)
+    dlg:add_button("Cancel", close_dialog, 5, 12, 2, 1)
 
     dlg:show()
 end
@@ -555,14 +514,6 @@ end
 function apply_osd_settings()
     cfg.osd_enabled = widgets.osd_enabled:get_checked()
     cfg.use_24h_clock = widgets.use_24h:get_checked()
-    cfg.autohide_enabled = widgets.autohide_enabled:get_checked()
-
-    -- Validate and parse timeout
-    local timeout_str = widgets.autohide_timeout:get_text()
-    local timeout = tonumber(timeout_str) or 5
-    if timeout < 1 then timeout = 1 end
-    if timeout > 300 then timeout = 300 end  -- Max 5 minutes
-    cfg.autohide_timeout = timeout
 
     -- Slot-based settings
     cfg.osd_slots = {
