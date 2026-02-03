@@ -21,7 +21,7 @@
 function descriptor()
     return {
         title = "Speed Scheduler",
-        version = "3.1.0",
+        version = "3.3.0",
         author = "Jay Groh",
         url = "https://github.com/jaygroh/vlc-custom-speed-lua",
         shortdesc = "Speed Scheduler",
@@ -347,61 +347,131 @@ end
 -- OSD Display Dialog
 --------------------------------------------------------------------------------
 
+-- Element options for dropdowns
+local element_options = {
+    { id = "remaining", label = "Remaining Time" },
+    { id = "speed", label = "Current Speed" },
+    { id = "finish", label = "Finish Time" }
+}
+
 function show_osd_dialog()
     close_dialog()
     load_config()
+
+    -- Set defaults for new slot-based config
+    if not cfg.osd_slots then
+        cfg.osd_slots = {
+            top = { element = "remaining", show = true, position = "top-right" },
+            middle = { element = "speed", show = true, position = "top-right" },
+            bottom = { element = "finish", show = false, position = "top-right" }
+        }
+    end
 
     dlg = vlc.dialog("OSD Display")
 
     -- Row 1: Master enable
     dlg:add_label("Master Switch:", 1, 1, 2, 1)
-    widgets.osd_enabled = dlg:add_check_box("Enable OSD", cfg.osd_enabled == true, 3, 1, 2, 1)
+    widgets.osd_enabled = dlg:add_check_box("Enable OSD", cfg.osd_enabled == true, 3, 1, 3, 1)
 
     -- Row 2: Clock format
     dlg:add_label("Clock Format:", 1, 2, 2, 1)
-    widgets.use_24h = dlg:add_check_box("24-hour", cfg.use_24h_clock == true, 3, 2, 2, 1)
+    widgets.use_24h = dlg:add_check_box("24-hour", cfg.use_24h_clock == true, 3, 2, 3, 1)
 
     -- Row 3: Separator
-    dlg:add_label(string.rep("-", 45), 1, 3, 4, 1)
+    dlg:add_label(string.rep("-", 50), 1, 3, 6, 1)
 
-    -- Row 4: Column headers
-    dlg:add_label("Element", 1, 4, 1, 1)
-    dlg:add_label("Show", 2, 4, 1, 1)
-    dlg:add_label("Position", 3, 4, 2, 1)
+    -- Row 4: Description
+    dlg:add_label("Stack order (when elements share same position):", 1, 4, 6, 1)
 
-    -- Row 5: Remaining time
-    dlg:add_label("Remaining Time", 1, 5, 1, 1)
-    widgets.osd_adj_on = dlg:add_check_box("", cfg.osd_show_adjusted ~= false, 2, 5, 1, 1)
-    widgets.osd_adj_pos = dlg:add_dropdown(3, 5, 2, 1)
-    populate_position_dropdown(widgets.osd_adj_pos, cfg.osd_adjusted_position)
+    -- Row 5: Column headers
+    dlg:add_label("Slot", 1, 5, 1, 1)
+    dlg:add_label("Element", 2, 5, 2, 1)
+    dlg:add_label("Show", 4, 5, 1, 1)
+    dlg:add_label("Position", 5, 5, 2, 1)
 
-    -- Row 6: Speed
-    dlg:add_label("Current Speed", 1, 6, 1, 1)
-    widgets.osd_spd_on = dlg:add_check_box("", cfg.osd_show_speed ~= false, 2, 6, 1, 1)
-    widgets.osd_spd_pos = dlg:add_dropdown(3, 6, 2, 1)
-    populate_position_dropdown(widgets.osd_spd_pos, cfg.osd_speed_position)
+    -- Row 6: Top slot
+    dlg:add_label("Top:", 1, 6, 1, 1)
+    widgets.slot_top_elem = dlg:add_dropdown(2, 6, 2, 1)
+    populate_element_dropdown(widgets.slot_top_elem, cfg.osd_slots.top.element)
+    widgets.slot_top_show = dlg:add_check_box("", cfg.osd_slots.top.show == true, 4, 6, 1, 1)
+    widgets.slot_top_pos = dlg:add_dropdown(5, 6, 2, 1)
+    populate_position_dropdown(widgets.slot_top_pos, cfg.osd_slots.top.position)
 
-    -- Row 7: Finish time
-    dlg:add_label("Finish Time", 1, 7, 1, 1)
-    widgets.osd_fin_on = dlg:add_check_box("", cfg.osd_show_finish == true, 2, 7, 1, 1)
-    widgets.osd_fin_pos = dlg:add_dropdown(3, 7, 2, 1)
-    populate_position_dropdown(widgets.osd_fin_pos, cfg.osd_finish_position)
+    -- Row 7: Middle slot
+    dlg:add_label("Middle:", 1, 7, 1, 1)
+    widgets.slot_mid_elem = dlg:add_dropdown(2, 7, 2, 1)
+    populate_element_dropdown(widgets.slot_mid_elem, cfg.osd_slots.middle.element)
+    widgets.slot_mid_show = dlg:add_check_box("", cfg.osd_slots.middle.show == true, 4, 7, 1, 1)
+    widgets.slot_mid_pos = dlg:add_dropdown(5, 7, 2, 1)
+    populate_position_dropdown(widgets.slot_mid_pos, cfg.osd_slots.middle.position)
 
-    -- Row 8: Note about speed
-    dlg:add_label("Note: Speed only shows when not 1x", 1, 8, 4, 1)
+    -- Row 8: Bottom slot
+    dlg:add_label("Bottom:", 1, 8, 1, 1)
+    widgets.slot_bot_elem = dlg:add_dropdown(2, 8, 2, 1)
+    populate_element_dropdown(widgets.slot_bot_elem, cfg.osd_slots.bottom.element)
+    widgets.slot_bot_show = dlg:add_check_box("", cfg.osd_slots.bottom.show == true, 4, 8, 1, 1)
+    widgets.slot_bot_pos = dlg:add_dropdown(5, 8, 2, 1)
+    populate_position_dropdown(widgets.slot_bot_pos, cfg.osd_slots.bottom.position)
 
-    -- Row 9: Note about script
-    dlg:add_label("* Enable script in Script Setup for OSD", 1, 9, 4, 1)
+    -- Row 9: Note about speed
+    dlg:add_label("Note: Speed only shows when not at 1x", 1, 9, 6, 1)
 
-    -- Row 10: Status (pre-sized to prevent window resize)
-    widgets.status = dlg:add_label(string.rep(" ", 30), 1, 10, 4, 1)
+    -- Row 10: Note about script
+    dlg:add_label("* Enable script in Script Setup for OSD", 1, 10, 6, 1)
 
-    -- Row 11: Buttons
-    dlg:add_button("Apply", apply_osd_settings, 1, 11, 1, 1)
-    dlg:add_button("Save & Close", save_osd_and_close, 2, 11, 2, 1)
-    dlg:add_button("Cancel", close_dialog, 4, 11, 1, 1)
+    -- Row 11: Status (pre-sized to prevent window resize)
+    widgets.status = dlg:add_label(string.rep(" ", 35), 1, 11, 6, 1)
+
+    -- Row 12: Buttons
+    dlg:add_button("Apply", apply_osd_settings, 1, 12, 2, 1)
+    dlg:add_button("Save & Close", save_osd_and_close, 3, 12, 2, 1)
+    dlg:add_button("Cancel", close_dialog, 5, 12, 2, 1)
 
     dlg:show()
+end
+
+function populate_element_dropdown(dropdown, saved_element)
+    local current = saved_element or "remaining"
+
+    -- Find current element's label
+    local current_label = "Remaining Time"
+    for _, opt in ipairs(element_options) do
+        if opt.id == current then
+            current_label = opt.label
+            break
+        end
+    end
+
+    -- Add current element first (so it's selected by default)
+    dropdown:add_value(current_label, 1)
+
+    -- Add other elements
+    local idx = 2
+    for _, opt in ipairs(element_options) do
+        if opt.id ~= current then
+            dropdown:add_value(opt.label, idx)
+            idx = idx + 1
+        end
+    end
+
+    -- Store mapping for this dropdown
+    if not widgets.elem_maps then widgets.elem_maps = {} end
+    local map = {current}
+    for _, opt in ipairs(element_options) do
+        if opt.id ~= current then
+            table.insert(map, opt.id)
+        end
+    end
+    widgets.elem_maps[dropdown] = map
+end
+
+function get_selected_element(dropdown)
+    local idx = dropdown:get_value()
+    local map = widgets.elem_maps and widgets.elem_maps[dropdown]
+    if map and idx >= 1 and idx <= #map then
+        return map[idx]
+    end
+    return "remaining"
 end
 
 function populate_position_dropdown(dropdown, saved_position)
@@ -445,14 +515,24 @@ function apply_osd_settings()
     cfg.osd_enabled = widgets.osd_enabled:get_checked()
     cfg.use_24h_clock = widgets.use_24h:get_checked()
 
-    cfg.osd_show_adjusted = widgets.osd_adj_on:get_checked()
-    cfg.osd_adjusted_position = get_selected_position(widgets.osd_adj_pos)
-
-    cfg.osd_show_speed = widgets.osd_spd_on:get_checked()
-    cfg.osd_speed_position = get_selected_position(widgets.osd_spd_pos)
-
-    cfg.osd_show_finish = widgets.osd_fin_on:get_checked()
-    cfg.osd_finish_position = get_selected_position(widgets.osd_fin_pos)
+    -- Slot-based settings
+    cfg.osd_slots = {
+        top = {
+            element = get_selected_element(widgets.slot_top_elem),
+            show = widgets.slot_top_show:get_checked(),
+            position = get_selected_position(widgets.slot_top_pos)
+        },
+        middle = {
+            element = get_selected_element(widgets.slot_mid_elem),
+            show = widgets.slot_mid_show:get_checked(),
+            position = get_selected_position(widgets.slot_mid_pos)
+        },
+        bottom = {
+            element = get_selected_element(widgets.slot_bot_elem),
+            show = widgets.slot_bot_show:get_checked(),
+            position = get_selected_position(widgets.slot_bot_pos)
+        }
+    }
 
     save_config()
     -- Refresh dialog to show saved positions and avoid resize

@@ -144,6 +144,32 @@ function get_playback_info()
     }
 end
 
+function get_element_text(element_id, info, use_24h)
+    if element_id == "remaining" then
+        local adjusted = info.remaining / info.rate
+        local prefix = ""
+        if info.rate ~= 1.0 then
+            prefix = "~ "
+        end
+        return prefix .. format_time(adjusted) .. " remaining"
+
+    elseif element_id == "speed" then
+        -- Speed only shows when not 1x
+        if info.rate ~= 1.0 then
+            return string.format("%.2fx speed", info.rate)
+        end
+        return nil
+
+    elseif element_id == "finish" then
+        local now = os.date("*t")
+        local now_seconds = now.hour * 3600 + now.min * 60 + now.sec
+        local finish_seconds = now_seconds + (info.remaining / info.rate)
+        return "Ends " .. format_clock_time(finish_seconds, use_24h)
+    end
+
+    return nil
+end
+
 function update_osd()
     load_config()
 
@@ -157,42 +183,30 @@ function update_osd()
 
     local use_24h = cfg.use_24h_clock == true
 
-    -- Group elements by position
+    -- Default slots if not configured
+    local slots = cfg.osd_slots
+    if not slots then
+        slots = {
+            top = { element = "remaining", show = true, position = "top-right" },
+            middle = { element = "speed", show = true, position = "top-right" },
+            bottom = { element = "finish", show = false, position = "top-right" }
+        }
+    end
+
+    -- Process slots in order (top, middle, bottom)
+    local slot_order = {"top", "middle", "bottom"}
     local by_position = {}
 
-    -- Speed-adjusted remaining time
-    if cfg.osd_show_adjusted ~= false then
-        local adjusted = info.remaining / info.rate
-        local prefix = ""
-        if info.rate ~= 1.0 then
-            prefix = "~ "
+    for _, slot_name in ipairs(slot_order) do
+        local slot = slots[slot_name]
+        if slot and slot.show then
+            local text = get_element_text(slot.element, info, use_24h)
+            if text then
+                local pos = slot.position or "top-right"
+                if not by_position[pos] then by_position[pos] = {} end
+                table.insert(by_position[pos], text)
+            end
         end
-        local text = prefix .. format_time(adjusted) .. " remaining"
-        local pos = cfg.osd_adjusted_position or "top-right"
-
-        if not by_position[pos] then by_position[pos] = {} end
-        table.insert(by_position[pos], text)
-    end
-
-    -- Current speed (only show if not 1x)
-    if cfg.osd_show_speed ~= false and info.rate ~= 1.0 then
-        local text = string.format("%.2fx speed", info.rate)
-        local pos = cfg.osd_speed_position or "top-right"
-
-        if not by_position[pos] then by_position[pos] = {} end
-        table.insert(by_position[pos], text)
-    end
-
-    -- Estimated finish time
-    if cfg.osd_show_finish == true then
-        local now = os.date("*t")
-        local now_seconds = now.hour * 3600 + now.min * 60 + now.sec
-        local finish_seconds = now_seconds + (info.remaining / info.rate)
-        local text = "Ends " .. format_clock_time(finish_seconds, use_24h)
-        local pos = cfg.osd_finish_position or "top-right"
-
-        if not by_position[pos] then by_position[pos] = {} end
-        table.insert(by_position[pos], text)
     end
 
     -- Display stacked messages for each position
