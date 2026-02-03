@@ -21,7 +21,7 @@
 function descriptor()
     return {
         title = "Speed Scheduler",
-        version = "2026.02.02.0",
+        version = "2026.02.02.10",
         author = "Jay Groh",
         url = "https://github.com/jaygroh/vlc-custom-speed-lua",
         shortdesc = "Speed Scheduler",
@@ -620,7 +620,7 @@ end
 function show_about_dialog()
     close_dialog()
 
-    local version = "2026.02.02.0"
+    local version = "2026.02.02.10"
 
     dlg = vlc.dialog("About Speed Scheduler")
 
