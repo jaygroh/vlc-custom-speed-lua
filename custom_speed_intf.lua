@@ -149,7 +149,7 @@ function get_element_text(element_id, info, use_24h)
         local adjusted = info.remaining / info.rate
         local prefix = ""
         if info.rate ~= 1.0 then
-            prefix = "~ "
+            prefix = "≈ "
         end
         return prefix .. format_time(adjusted) .. " remaining"
 
@@ -180,6 +180,30 @@ function update_osd()
 
     local info = get_playback_info()
     if not info then return false end
+
+    -- Auto-hide logic
+    if cfg.autohide_enabled == true then
+        local input = vlc.object.input()
+        if input then
+            local status = vlc.playlist.status()
+            local timeout = cfg.autohide_timeout or 5
+
+            -- Check if paused or stopped
+            if status == "paused" or status == "stopped" then
+                if not _osd_idle_start then
+                    _osd_idle_start = vlc.misc.mdate() / 1000000
+                end
+                local idle_seconds = (vlc.misc.mdate() / 1000000) - _osd_idle_start
+                if idle_seconds > timeout then
+                    -- Timeout reached, don't display OSD
+                    return false
+                end
+            else
+                -- Playing - reset idle timer
+                _osd_idle_start = nil
+            end
+        end
+    end
 
     local use_24h = cfg.use_24h_clock == true
 
