@@ -1,5 +1,7 @@
 # VLC Speed Scheduler
 
+**Current Version: 2026.02.02.10**
+
 A VLC media player Lua extension that calculates playback speed to finish a video in a specified time, with optional on-screen display of speed-adjusted remaining time.
 
 ## Features
