@@ -147,17 +147,21 @@ end
 function get_element_text(element_id, info, use_24h)
     if element_id == "remaining" then
         local adjusted = info.remaining / info.rate
-        local prefix = ""
+        -- VLC 4.0 format: show negative time
+        local time_str = "-" .. format_time(adjusted)
+
+        -- Add speed indicator if not normal speed (VLC 4.0 style)
         if info.rate ~= 1.0 then
-            prefix = "≈ "
+            -- Format speed as "X.X" (e.g., 1.5, 2.0)
+            local speed_str = string.format("%.1f", info.rate)
+            time_str = time_str .. " (@ " .. speed_str .. "X)"
         end
-        return prefix .. format_time(adjusted) .. " remaining"
+
+        return time_str
 
     elseif element_id == "speed" then
-        -- Speed only shows when not 1x
-        if info.rate ~= 1.0 then
-            return string.format("%.2fx speed", info.rate)
-        end
+        -- Speed is now combined with remaining time in VLC 4.0 format
+        -- Return nil so it's not shown separately
         return nil
 
     elseif element_id == "finish" then
@@ -188,7 +192,7 @@ function update_osd()
     if not slots then
         slots = {
             top = { element = "remaining", show = true, position = "top-right" },
-            middle = { element = "speed", show = true, position = "top-right" },
+            middle = { element = "speed", show = false, position = "top-right" },
             bottom = { element = "finish", show = false, position = "top-right" }
         }
     end
