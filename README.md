@@ -1,6 +1,6 @@
 # VLC Speed Scheduler
 
-**Current Version: 2026.02.02.10**
+**Current Version: 2026.02.12.01**
 
 A VLC media player Lua extension that calculates playback speed to finish a video in a specified time, with optional on-screen display of speed-adjusted remaining time.
 
@@ -14,8 +14,7 @@ A VLC media player Lua extension that calculates playback speed to finish a vide
 - 5 or 1 minute interval options for clock time selection
 
 ### On-Screen Display (OSD)
-- **Speed-adjusted remaining time**: Shows actual time remaining accounting for playback speed (e.g., "≈ 25:00 remaining")
-- **Current playback speed**: Displays when not at 1x speed (e.g., "1.50x speed")
+- **Speed-adjusted remaining time**: Shows time remaining accounting for playback speed with inline speed indicator (e.g., "-25:00 (@ 1.5X)")
 - **Estimated finish time**: Shows clock time when video will end (e.g., "Ends 3:45 PM")
 - **Configurable layout**: Stack order control - choose which elements display in Top/Middle/Bottom positions
 - **9 screen positions**: Place elements anywhere on screen (top-left, top, top-right, etc.)
